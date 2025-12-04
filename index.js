@@ -10,7 +10,14 @@ const sequelize = require("./Connection/database");
 
 const app = express();
 
-app.use(cors());
+// ✅ Configure CORS to allow specific frontend
+app.use(cors({
+    origin: "https://blog-app-backend-opnp.vercel.app/",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
 // ✅ Connect & Sync Database
