@@ -1,41 +1,38 @@
 const express = require('express');
-const router = require('./route');
+const router = require('./route'); // your routes
+const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
-const cors = require("cors");
-const path = require("path");
-
-// ✅ IMPORT sequelize connection (this was missing)
-const sequelize = require("./Connection/database");
 
 const app = express();
 
-// ✅ Configure CORS to allow specific frontend
+// ---------------- CORS ----------------
+const allowedOrigins = [
+    "http://localhost:5173", // dev frontend
+    "https://your-frontend-production.vercel.app" // prod frontend
+];
+
 app.use(cors({
-    origin: "https://blog-app-backend-opnp.vercel.app/",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    origin: function (origin, callback) {
+        // allow requests with no origin (like Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
 }));
 
+// ---------------- JSON parser ----------------
 app.use(express.json());
 
-// ✅ Connect & Sync Database
-sequelize.authenticate()
-    .then(() => console.log("MySQL Connected"))
-    .catch(err => console.log("MySQL Connection Error:", err));
-
-sequelize.sync({ alter: true })
-    .then(() => console.log("Database Synced"))
-    .catch(err => console.log("Sync Error:", err));
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// ROUTES
+// ---------------- Routes ----------------
 app.use('/', router);
 
-// START SERVER
+// ---------------- Start server ----------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
